@@ -24,6 +24,7 @@ pub use subscription::{Subscription, SubscriptionClient};
 pub mod sync;
 
 #[cfg(any(
+    test,
     feature = "http-client",
     feature = "websocket-client",
     feature = "mock-client"
