@@ -11,7 +11,7 @@ pub use subscription::{Subscription, SubscriptionClient};
 #[cfg(any(feature = "http-client", feature = "websocket-client"))]
 pub mod sync;
 
-#[cfg(any(feature = "http-client", feature = "websocket-client"))]
+#[cfg(any(test, feature = "http-client", feature = "websocket-client"))]
 mod transport;
 
 #[cfg(feature = "http-client")]
