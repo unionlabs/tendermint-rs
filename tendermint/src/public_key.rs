@@ -313,6 +313,9 @@ pub enum Algorithm {
 
     /// secp256k1
     Secp256k1,
+
+    /// bn254
+    Bn254,
 }
 
 impl Algorithm {
@@ -321,6 +324,7 @@ impl Algorithm {
         match self {
             Algorithm::Ed25519 => "ed25519",
             Algorithm::Secp256k1 => "secp256k1",
+            Algorithm::Bn254 => "bn254",
         }
     }
 }
@@ -338,6 +342,7 @@ impl FromStr for Algorithm {
         match s {
             "ed25519" => Ok(Algorithm::Ed25519),
             "secp256k1" => Ok(Algorithm::Secp256k1),
+            "bn254" => Ok(Algorithm::Bn254),
             _ => Err(Error::parse(format!("invalid algorithm: {s}"))),
         }
     }

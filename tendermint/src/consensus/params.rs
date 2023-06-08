@@ -178,6 +178,7 @@ mod v0_34 {
                     .map(|k| match k {
                         public_key::Algorithm::Ed25519 => "ed25519".to_string(),
                         public_key::Algorithm::Secp256k1 => "secp256k1".to_string(),
+                        public_key::Algorithm::Bn254 => public_key::Algorithm::Bn254.to_string(),
                     })
                     .collect(),
             }
@@ -272,6 +273,7 @@ mod v0_37 {
                     .map(|k| match k {
                         public_key::Algorithm::Ed25519 => "ed25519".to_string(),
                         public_key::Algorithm::Secp256k1 => "secp256k1".to_string(),
+                        public_key::Algorithm::Bn254 => public_key::Algorithm::Bn254.to_string(),
                     })
                     .collect(),
             }
@@ -367,6 +369,7 @@ mod v0_38 {
                     .map(|k| match k {
                         public_key::Algorithm::Ed25519 => "ed25519".to_string(),
                         public_key::Algorithm::Secp256k1 => "secp256k1".to_string(),
+                        public_key::Algorithm::Bn254 => public_key::Algorithm::Bn254.to_string(),
                     })
                     .collect(),
             }

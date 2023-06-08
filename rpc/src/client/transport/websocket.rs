@@ -886,10 +886,14 @@ impl WebSocketClientDriver {
             CompatMode::V0_37 => DialectEvent::<v0_37::Event>::from_string(&msg).map(Into::into),
             CompatMode::V0_34 => DialectEvent::<v0_34::Event>::from_string(&msg).map(Into::into),
         };
-        if let Ok(ev) = parse_res {
-            debug!("JSON-RPC event: {}", msg);
-            self.publish_event(ev).await;
-            return Ok(());
+
+        match parse_res {
+            Ok(ev) => {
+                debug!("JSON-RPC event: {}", msg);
+                self.publish_event(ev).await;
+                return Ok(());
+            },
+            Err(why) => error!("{}", why.to_string()),
         }
 
         let wrapper: response::Wrapper<GenericJsonResponse> = match serde_json::from_str(&msg) {

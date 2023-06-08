@@ -16,5 +16,5 @@ macro_rules! perform_with_compat {
 
 #[cfg(feature = "http-client")]
 pub mod http;
-#[cfg(feature = "websocket-client")]
+#[cfg(any(test, feature = "websocket-client"))]
 pub mod websocket;
