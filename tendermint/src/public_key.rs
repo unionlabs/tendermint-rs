@@ -41,6 +41,14 @@ pub enum PublicKey {
     )]
     Ed25519(Ed25519),
 
+    /// Ed25519 keys
+    #[serde(
+        rename = "tendermint/PubKeyBn254",
+        serialize_with = "serialize_bn254_base64",
+        deserialize_with = "deserialize_bn254_base64"
+    )]
+    Bn254(Vec<u8>),
+
     /// Secp256k1 keys
     #[cfg(feature = "secp256k1")]
     #[cfg_attr(docsrs, doc(cfg(feature = "secp256k1")))]
@@ -156,6 +164,11 @@ tendermint_pb_modules! {
                         pk.to_sec1_bytes().into(),
                     )),
                 },
+                PublicKey::Bn254(ref pk) => RawPublicKey {
+                    sum: Some(Sum::Bn254(
+                        pk.as_bytes().to_vec(),
+                    )),
+                },
             }
         }
     }
@@ -201,6 +214,7 @@ impl PublicKey {
             PublicKey::Ed25519(pk) => pk.as_bytes().to_vec(),
             #[cfg(feature = "secp256k1")]
             PublicKey::Secp256k1(pk) => pk.to_sec1_bytes().into(),
+            PublicKey::Bn254(pk) => pk.clone(),
         }
     }
 
@@ -218,6 +232,8 @@ impl PublicKey {
                 key_bytes.extend(pk.to_sec1_bytes().as_ref());
                 key_bytes
             },
+            // REVIEW(benluelo): not sure what the prefix is for bn254
+            PublicKey::Bn254(ref pk) => pk.clone(),
         };
         bech32::encode(hrp, backward_compatible_amino_prefixed_pubkey)
     }
@@ -254,12 +270,18 @@ impl Ord for PublicKey {
                 PublicKey::Ed25519(b) => a.as_bytes().cmp(b.as_bytes()),
                 #[cfg(feature = "secp256k1")]
                 PublicKey::Secp256k1(_) => Ordering::Less,
+                PublicKey::Bn254(_) => Ordering::Less,
             },
             #[cfg(feature = "secp256k1")]
             PublicKey::Secp256k1(a) => match other {
                 PublicKey::Ed25519(_) => Ordering::Greater,
                 #[cfg(feature = "secp256k1")]
                 PublicKey::Secp256k1(b) => a.cmp(b),
+                PublicKey::Bn254(_) => Ordering::Less,
+            },
+            PublicKey::Bn254(ref pk) => match other {
+                PublicKey::Ed25519(_) => todo!(),
+                PublicKey::Bn254(_) => todo!(),
             },
         }
     }
@@ -282,6 +304,7 @@ impl TendermintKey {
             PublicKey::Ed25519(_) => Ok(TendermintKey::AccountKey(public_key)),
             #[cfg(feature = "secp256k1")]
             PublicKey::Secp256k1(_) => Ok(TendermintKey::AccountKey(public_key)),
+            PublicKey::Bn254(_) => Ok(TendermintKey::AccountKey(public_key)),
         }
     }
 
@@ -375,6 +398,16 @@ where
         .serialize(serializer)
 }
 
+/// Serialize the bytes of an Ed25519 public key as Base64. Used for serializing JSON
+fn serialize_bn254_base64<S>(pk: &Vec<u8>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: ser::Serializer,
+{
+    String::from_utf8(base64::encode(pk))
+        .unwrap()
+        .serialize(serializer)
+}
+
 /// Serialize the bytes of a secp256k1 ECDSA public key as Base64. Used for serializing JSON
 #[cfg(feature = "secp256k1")]
 fn serialize_secp256k1_base64<S>(pk: &Secp256k1, serializer: S) -> Result<S::Ok, S::Error>
@@ -394,6 +427,15 @@ where
     let encoded = String::deserialize(deserializer)?;
     let bytes = base64::decode(encoded).map_err(D::Error::custom)?;
     Ed25519::try_from(&bytes[..]).map_err(|_| D::Error::custom("invalid Ed25519 key"))
+}
+
+fn deserialize_bn254_base64<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use de::Error;
+    let encoded = String::deserialize(deserializer)?;
+    base64::decode(encoded).map_err(D::Error::custom)
 }
 
 #[cfg(feature = "secp256k1")]
