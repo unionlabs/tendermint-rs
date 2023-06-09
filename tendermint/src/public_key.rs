@@ -47,7 +47,7 @@ pub enum PublicKey {
         serialize_with = "serialize_bn254_base64",
         deserialize_with = "deserialize_bn254_base64"
     )]
-    Bn254(Vec<u8>),
+    Bn254([u8; 32]),
 
     /// Secp256k1 keys
     #[cfg(feature = "secp256k1")]
@@ -396,7 +396,7 @@ where
 }
 
 /// Serialize the bytes of an Ed25519 public key as Base64. Used for serializing JSON
-fn serialize_bn254_base64<S>(pk: &Vec<u8>, serializer: S) -> Result<S::Ok, S::Error>
+fn serialize_bn254_base64<S>(pk: &[u8; 32], serializer: S) -> Result<S::Ok, S::Error>
 where
     S: ser::Serializer,
 {
@@ -426,13 +426,16 @@ where
     Ed25519::try_from(&bytes[..]).map_err(|_| D::Error::custom("invalid Ed25519 key"))
 }
 
-fn deserialize_bn254_base64<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+fn deserialize_bn254_base64<'de, D>(deserializer: D) -> Result<[u8; 32], D::Error>
 where
     D: Deserializer<'de>,
 {
     use de::Error;
     let encoded = String::deserialize(deserializer)?;
-    base64::decode(encoded).map_err(D::Error::custom)
+    base64::decode(encoded)
+        .map_err(D::Error::custom)
+        .try_into()
+        .map_err(D::Error::custom)
 }
 
 #[cfg(feature = "secp256k1")]
