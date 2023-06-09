@@ -40,14 +40,6 @@ pub enum PublicKey {
     )]
     Ed25519(Ed25519),
 
-    /// Ed25519 keys
-    #[serde(
-        rename = "tendermint/PubKeyBn254",
-        serialize_with = "serialize_bn254_base64",
-        deserialize_with = "deserialize_bn254_base64"
-    )]
-    Bn254([u8; 32]),
-
     /// Secp256k1 keys
     #[cfg(feature = "secp256k1")]
     #[cfg_attr(docsrs, doc(cfg(feature = "secp256k1")))]
@@ -57,6 +49,14 @@ pub enum PublicKey {
         deserialize_with = "deserialize_secp256k1_base64"
     )]
     Secp256k1(Secp256k1),
+
+    /// Bn254 keys
+    #[serde(
+        rename = "tendermint/PubKeyBn254",
+        serialize_with = "serialize_bn254_base64",
+        deserialize_with = "deserialize_bn254_base64"
+    )]
+    Bn254([u8; 32]),
 }
 
 // Internal thunk type to facilitate deserialization from the raw Protobuf data
@@ -165,7 +165,7 @@ tendermint_pb_modules! {
                 },
                 PublicKey::Bn254(ref pk) => RawPublicKey {
                     sum: Some(Sum::Bn254(
-                        pk.as_bytes().to_vec(),
+                        pk.to_vec(),
                     )),
                 },
             }
@@ -219,7 +219,7 @@ impl PublicKey {
             PublicKey::Ed25519(pk) => pk.as_bytes().to_vec(),
             #[cfg(feature = "secp256k1")]
             PublicKey::Secp256k1(pk) => pk.to_sec1_bytes().into(),
-            PublicKey::Bn254(pk) => pk.clone(),
+            PublicKey::Bn254(pk) => pk.to_vec(),
         }
     }
 
@@ -238,7 +238,7 @@ impl PublicKey {
                 key_bytes
             },
             // REVIEW(benluelo): not sure what the prefix is for bn254
-            PublicKey::Bn254(ref pk) => pk.clone(),
+            PublicKey::Bn254(ref pk) => pk.to_vec(),
         };
         bech32::encode(hrp, backward_compatible_amino_prefixed_pubkey)
     }
@@ -291,9 +291,11 @@ impl Ord for PublicKey {
                 PublicKey::Secp256k1(b) => a.cmp(b),
                 PublicKey::Bn254(_) => Ordering::Less,
             },
-            PublicKey::Bn254(ref pk) => match other {
-                PublicKey::Ed25519(_) => todo!(),
-                PublicKey::Bn254(_) => todo!(),
+            PublicKey::Bn254(a) => match other {
+                PublicKey::Ed25519(_) => Ordering::Greater,
+                #[cfg(feature = "secp256k1")]
+                PublicKey::Secp256k1(_) => Ordering::Greater,
+                PublicKey::Bn254(b) => a.cmp(b),
             },
         }
     }
@@ -448,9 +450,14 @@ where
     use de::Error;
     let encoded = String::deserialize(deserializer)?;
     base64::decode(encoded)
-        .map_err(D::Error::custom)
+        .map_err(D::Error::custom)?
         .try_into()
-        .map_err(D::Error::custom)
+        .map_err(|invalid: Vec<u8>| {
+            D::Error::custom(format!(
+                "invalid length: expected 32, got {}",
+                invalid.len()
+            ))
+        })
 }
 
 #[cfg(feature = "secp256k1")]

@@ -138,6 +138,10 @@ mod key_conversions {
                 PublicKey::Ed25519(pk) => Id::from(pk),
                 #[cfg(feature = "secp256k1")]
                 PublicKey::Secp256k1(pk) => Id::from(pk),
+                PublicKey::Bn254(pk) => {
+                    let digest = Sha256::digest(pk);
+                    Id(digest[..LENGTH].try_into().unwrap())
+                },
             }
         }
     }
