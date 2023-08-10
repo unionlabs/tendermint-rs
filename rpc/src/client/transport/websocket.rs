@@ -899,7 +899,7 @@ impl WebSocketClientDriver {
                 self.publish_event(ev).await;
                 return Ok(());
             },
-            Err(why) => error!("{}", why.to_string()),
+            Err(why) => trace!("{}", why.to_string()),
         }
 
         let wrapper: response::Wrapper<GenericJsonResponse> = match serde_json::from_str(&msg) {
