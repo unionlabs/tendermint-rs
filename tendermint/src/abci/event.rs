@@ -1,6 +1,16 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Deserializer};
 
 use crate::prelude::*;
+
+fn deserialize_null_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    T: Default + Deserialize<'de>,
+    D: Deserializer<'de>,
+{
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or_default())
+}
+
 
 /// An event that occurred while processing a request.
 ///
@@ -188,6 +198,26 @@ where
     fn into_event(self) -> Event {
         self.into()
     }
+}
+
+/// A key-value pair describing an [`Event`].
+///
+/// Generic methods are provided for more ergonomic attribute construction, see
+/// [`Event::new`] for details.
+///
+/// [ABCI documentation](https://docs.tendermint.com/master/spec/abci/abci.html#events)
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Hash)]
+pub struct EventAttribute {
+    /// The event key.
+    pub key: String,
+ 
+    /// The event value.
+    #[serde(deserialize_with = "deserialize_null_default")]
+    pub value: String,
+    /// Whether Tendermint's indexer should index this event.
+    ///
+    /// **This field is nondeterministic**.
+    pub index: bool,
 }
 
 impl EventAttribute {
