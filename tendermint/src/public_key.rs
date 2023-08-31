@@ -57,8 +57,10 @@ pub enum PublicKey {
         serialize_with = "serialize_bn254_base64",
         deserialize_with = "deserialize_bn254_base64"
     )]
-    Bn254([u8; 32]),
+    Bn254(Bn254),
 }
+
+type Bn254 = [u8; 32];
 
 // Internal thunk type to facilitate deserialization from the raw Protobuf data
 // structure's JSON representation.
@@ -74,6 +76,7 @@ impl From<ProtobufPublicKeyWrapper> for PublicKey {
             ProtobufPublicKey::Ed25519 { ed25519 } => PublicKey::Ed25519(ed25519),
             #[cfg(feature = "secp256k1")]
             ProtobufPublicKey::Secp256k1 { secp256k1 } => PublicKey::Secp256k1(secp256k1),
+            ProtobufPublicKey::Bn254 { bn254 } => PublicKey::Bn254(bn254),
         }
     }
 }
@@ -88,6 +91,15 @@ enum ProtobufPublicKey {
             deserialize_with = "deserialize_ed25519_base64"
         )]
         ed25519: Ed25519,
+    },
+
+    #[serde(rename = "tendermint.crypto.PublicKey_Bn254")]
+    Bn254 {
+        #[serde(
+            serialize_with = "serialize_bn254_base64",
+            deserialize_with = "deserialize_bn254_base64"
+        )]
+        bn254: Bn254,
     },
 
     #[cfg(feature = "secp256k1")]
