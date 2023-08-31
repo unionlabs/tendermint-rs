@@ -192,7 +192,6 @@ mod tests {
             let public_key = PublicKey::from_raw_ed25519(public_key).unwrap();
             match public_key {
                 PublicKey::Ed25519(_) => {},
-                #[cfg(feature = "secp256k1")]
                 _ => panic!("expected public key to be Ed25519: {:?}", public_key),
             }
             let sig = Signature::try_from(sig).unwrap();
