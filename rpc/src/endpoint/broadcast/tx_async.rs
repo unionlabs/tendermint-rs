@@ -53,6 +53,9 @@ pub struct Response {
 
     /// Transaction hash
     pub hash: Hash,
+
+    /// Transaction hash
+    pub codespace: String,
 }
 
 impl crate::Response for Response {}
