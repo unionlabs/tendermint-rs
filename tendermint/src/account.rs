@@ -20,6 +20,7 @@ pub const LENGTH: usize = 20;
 
 /// Account IDs
 #[derive(Copy, Clone, Eq, Hash, PartialEq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct Id([u8; LENGTH]); // JSON custom serialization for priv_validator_key.json
 
 impl Protobuf<Vec<u8>> for Id {}

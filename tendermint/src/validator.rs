@@ -145,6 +145,7 @@ impl Set {
 /// Validator information
 // Todo: Remove address and make it into a function that generates it on the fly from pub_key.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct Info {
     /// Validator account address
     pub address: account::Id,
@@ -228,6 +229,7 @@ impl Info {
 // Todo: Is there more knowledge/restrictions about proposerPriority?
 /// Proposer priority
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Default)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct ProposerPriority(i64);
 
 impl From<i64> for ProposerPriority {

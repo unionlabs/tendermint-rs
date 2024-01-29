@@ -1,6 +1,7 @@
 use crate::Error;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct VerificationKey([u8; 32]);
 
 impl core::fmt::Display for VerificationKey {
