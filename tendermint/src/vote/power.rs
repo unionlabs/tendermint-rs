@@ -8,6 +8,7 @@ use crate::{error::Error, prelude::*};
 
 /// Voting power
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Default)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct Power(u64);
 
 impl fmt::Display for Power {
