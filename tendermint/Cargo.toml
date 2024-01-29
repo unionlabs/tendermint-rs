@@ -51,6 +51,7 @@ ed25519-consensus = { version = "2", optional = true, default-features = false }
 sha2 = { version = "0.10", optional = true, default-features = false }
 k256 = { version = "0.13", optional = true, default-features = false, features = ["alloc", "ecdsa"] }
 ripemd = { version = "0.1.3", optional = true, default-features = false }
+arbitrary = { version = "1.3.2", features = ["derive"], optional = true }
 
 [features]
 default = ["std", "rust-crypto"]
@@ -58,6 +59,7 @@ std = ["flex-error/std", "clock"]
 clock = ["time/std"]
 secp256k1 = ["rust-crypto", "dep:k256", "dep:ripemd"]
 rust-crypto = ["dep:sha2", "dep:ed25519-consensus"]
+arbitrary = ["dep:arbitrary"]
 
 [dev-dependencies]
 k256 = { version = "0.13", default-features = false, features = ["ecdsa"] }

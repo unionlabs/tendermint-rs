@@ -31,6 +31,7 @@ use crate::{error::Error, prelude::*};
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
 #[serde(tag = "type", content = "value")] // JSON custom serialization for priv_validator_key.json
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub enum PublicKey {
     /// Ed25519 keys
     #[serde(
