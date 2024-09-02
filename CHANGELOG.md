@@ -1,6 +1,114 @@
 # CHANGELOG
 
+## v0.39.1
+
+*August 9th, 2024*
+
+This is a bugfix release which addresses a couple issues found in the v0.39.0 release.
+
+Users of v0.39.0 are strongly encouraged to upgrade to v0.39.1.
+
+### BUG FIXES
+
+- Fix newly introduced `std` and `json-schema` features, and ensure all feature flag can be used independently and in isolation.
+  ([\#1454](https://github.com/informalsystems/tendermint-rs/issues/1454))
+- Remove dependency on `prost-types` as it is not needed anymore now that
+  [#1452](https://github.com/informalsystems/tendermint-rs/pull/1452) has landed
+  ([\#1457](https://github.com/informalsystems/tendermint-rs/pull/1457))
+
+## v0.39.0
+
+*August 6th, 2024*
+
+This release bundles the `google.protobuf.Any` Protobuf type in `tendermint-proto` and brings improvements to `google.protobuf.Duration` and `google.protobuf.Timestamp`.
+
+### FEATURES
+
+- `[tendermint-proto]` Add `Any` type under `tendermint_proto::google::protobuf::Any` ([#1445](https://github.com/informalsystems/tendermint-rs/issues/1445))
+
+### IMPROVEMENTS
+
+- `[tendermint-proto]` Implement `prost::Name` for `tendermint_proto::google::protobuf::{Duration, Timestamp}` ([#1452](https://github.com/informalsystems/tendermint-rs/pull/1452/))
+- `[tendermint-proto]` Improve ProtoJSON serialization of `tendermint_proto::google::protobuf::{Duration, Timestamp}` ([#1452](https://github.com/informalsystems/tendermint-rs/pull/1452/))
+
+## v0.38.1
+
+*July 23rd, 2024*
+
+This release enhances decoding of the `AppHash` type by trying to decode it as base64 if it fails to decode as hex.
+This release also updates `prost` and `prost-types` to their latest version in the `tendermint` crate, something that was missed in the v0.38.0 release.
+
+### BREAKING CHANGES
+
+- `[tendermint]` Bump `prost` and `prost-types` to their latest versions in the `tendermint` crate.
+  This was missed in [#1444](https://github.com/informalsystems/tendermint-rs/pull/1444),
+  which only updated the two dependencies in `tendermint-rpc`, leading to duplicate versions
+  of both crates to be present in the dependency graph.
+  ([#1446](https://github.com/informalsystems/tendermint-rs/pull/1446))
+
+### IMPROVEMENTS
+
+- `[tendermint-rpc]` If `AppHash` fails to decode as hex, try to decode it as base64.
+  ([\#1449](https://github.com/informalsystems/tendermint-rs/issues/1449))
+
+## v0.38.0
+
+*July 15th, 2024*
+
+This release enhances `/block_results` response handling, relaxes `Block` validation, and adds support for the `/genesis_chunked` RPC endpoint.
+
+### BREAKING CHANGES
+
+- tendermint: relax validation rules on `Block`
+  ([\#1435](https://github.com/informalsystems/tendermint-rs/issues/1435))
+- `[tendermint-proto]`: Update `prost` to v0.13 and `tonic` to v0.12
+  ([\#1444](https://github.com/informalsystems/tendermint-rs/pull/1444))
+
+
+### BUG
+
+- `[tendermint-rpc]` Deserialize an empty JSON object as `None` for the `consensus_param_updates`
+  field in the `/block_results` response.
+  Deserialize version in consensus params as `None` if it is an empty object, null or not found.
+  ([\#1440](https://github.com/informalsystems/tendermint-rs/issues/1440))
+
+### FEATURES
+
+- `[tendermint-rpc]` Add support for the `/genesis_chunked` RPC endpoint
+  ([\#1438](https://github.com/informalsystems/tendermint-rs/issues/1438))
+
+## v0.37.0
+
+*May 30th, 2024*
+
+This release restores the commit verification interfaces of `PredicateVerifier` from tendermint-rs `0.35.0` and lower, but retains the performance improvements made in version `0.36.0`.
+
+This version also brings a few new features to the HTTP RPC client, notably a way to specify the User-Agent to send along HTTP requests, as well as a way to override the underlying `reqwest` client.
+
+Additionally, this release fixes a couple of issues with the `serde`-based deserialization of the `FinalizeBlock` and `Event` types.
+
+### BREAKING CHANGES
+
+- `[tendermint-proto]` Upgrade `tonic` to v0.11 ([\#1422](https://github.com/informalsystems/tendermint-rs/pull/1422))
+- `[tendermint-light-client-verifier]` Restores the commit verification interfaces of `PredicateVerifier<P, C, V>` from `<= 0.35.0` ([\#1423](https://github.com/informalsystems/tendermint-rs/pull/1423))
+  * `verify_commit(&self. untrusted: &UntrustedBlockState<'_>)` is restored, as in <= 0.35.0.
+  * `verify_commit(&self, untrusted: &UntrustedBlockState<'_>, trusted: &TrustedBlockState<'_>,)` introduced in 0.36.0 is renamed to `verify_commit_against_trusted`.
+  The performance improvements made in the `0.36.0` release are still intact.
+
+### FEATURES
+
+* `[tendermint-rpc]` Add a way to specify custom User-Agent for `HttpClient` ([#1425](https://github.com/informalsystems/tendermint-rs/issues/1425))
+- `[tendermint-rpc]` Add a `client()` method on `transport::http::Builder` to override the underlying `reqwest` client ([\#1421](https://github.com/informalsystems/tendermint-rs/pull/1421))
+- `[tendermint-rpc]` Add a `from_raw_parts()` method on `transport::http::HttpClient` to allow supplying the underlying `reqwest` client ([\#1421](https://github.com/informalsystems/tendermint-rs/pull/1421))
+
+### BUG FIXES
+
+- `[tendermint]` Fix `FinalizeBlock::validator_updates` deserialization as `nullable` ([\#1428](https://github.com/informalsystems/tendermint-rs/pull/1428))
+- `[tendermint-abci]` Add serde `default` annotation for `Event::type` to match `omitempty` in the Go implementation ([\#1416](https://github.com/informalsystems/tendermint-rs/pull/1416))
+
 ## v0.36.0
+
+*April 25th, 2024*
 
 This release brings substantial performance improvements to the voting power computation within the light client, improves the handling of misformed blocks (eg. with empty `last_commit` on non-first block) when decoding them from Protobuf or RPC responses, and adds missing `serde` derives on some Protobuf definitions.
 

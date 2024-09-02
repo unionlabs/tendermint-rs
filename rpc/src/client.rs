@@ -3,15 +3,31 @@
 mod compat;
 pub use compat::CompatMode;
 
-#[cfg(any(feature = "http-client", feature = "websocket-client"))]
+#[cfg(any(
+    feature = "http-client",
+    feature = "websocket-client",
+    feature = "mock-client"
+))]
 mod subscription;
-#[cfg(any(feature = "http-client", feature = "websocket-client"))]
+#[cfg(any(
+    feature = "http-client",
+    feature = "websocket-client",
+    feature = "mock-client"
+))]
 pub use subscription::{Subscription, SubscriptionClient};
 
-#[cfg(any(feature = "http-client", feature = "websocket-client"))]
+#[cfg(any(
+    feature = "http-client",
+    feature = "websocket-client",
+    feature = "mock-client"
+))]
 pub mod sync;
 
-#[cfg(any(feature = "http-client", feature = "websocket-client"))]
+#[cfg(any(
+    feature = "http-client",
+    feature = "websocket-client",
+    feature = "mock-client"
+))]
 mod transport;
 
 #[cfg(feature = "http-client")]
@@ -21,7 +37,7 @@ pub use transport::websocket::{
     self, WebSocketClient, WebSocketClientDriver, WebSocketClientUrl, WebSocketConfig,
 };
 
-#[cfg(any(feature = "http-client", feature = "websocket-client"))]
+#[cfg(feature = "mock-client")]
 pub use transport::mock::{MockClient, MockRequestMatcher, MockRequestMethodMatcher};
 
 use core::fmt;
@@ -269,6 +285,34 @@ pub trait Client {
         AppState: fmt::Debug + Serialize + DeserializeOwned + Send,
     {
         Ok(self.perform(genesis::Request::default()).await?.genesis)
+    }
+
+    async fn genesis_chunked(&self, chunk: u64) -> Result<genesis_chunked::Response, Error> {
+        self.perform(genesis_chunked::Request::new(chunk)).await
+    }
+
+    /// `/genesis_chunked`: get genesis file in multiple chunks.
+    #[cfg(any(feature = "http-client", feature = "websocket-client"))]
+    async fn genesis_chunked_stream(
+        &self,
+    ) -> core::pin::Pin<Box<dyn futures::Stream<Item = Result<Vec<u8>, Error>> + '_>> {
+        Box::pin(futures::stream::unfold(Some(0), move |chunk| async move {
+            // Verify if there are more chunks to fetch
+            let chunk = chunk?;
+
+            match self.genesis_chunked(chunk).await {
+                Ok(response) => {
+                    if response.chunk + 1 >= response.total {
+                        // No more chunks to fetch
+                        Some((Ok(response.data), None))
+                    } else {
+                        // Emit this chunk and fetch the next chunk
+                        Some((Ok(response.data), Some(response.chunk + 1)))
+                    }
+                },
+                Err(e) => Some((Err(e), None)), // Abort the stream
+            }
+        }))
     }
 
     /// `/net_info`: obtain information about P2P and other network connections.

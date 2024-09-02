@@ -1,6 +1,6 @@
 //! tendermint-proto library gives the developer access to the Tendermint proto-defined structs.
 
-#![cfg_attr(not(any(feature = "grpc-server", feature = "grpc-client")), no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]
 #![deny(warnings, trivial_casts, trivial_numeric_casts, unused_import_braces)]
 #![allow(clippy::large_enum_variant)]
 #![forbid(unsafe_code)]
@@ -22,13 +22,8 @@ pub mod serializers;
 
 use prelude::*;
 
-/// Built-in prost_types with slight customization to enable JSON-encoding
-pub mod google {
-    pub mod protobuf {
-        // custom Timeout and Duration types that have valid doctest documentation texts
-        include!("protobuf.rs");
-    }
-}
+/// Built-in `prost_types` with slight customization to enable JSON-encoding.
+pub mod google;
 
 /// Allows for easy Google Protocol Buffers encoding and decoding of domain
 /// types with validation.
